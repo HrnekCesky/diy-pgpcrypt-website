@@ -3,484 +3,359 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cleopatra - Queen of the Nile</title>
+  <title>Kleopatra - Web OpenPGP Manager</title>
+  <!-- Load OpenPGP.js from CDN -->
+  <script src="https://unpkg.com/openpgp@5.11.1/dist/openpgp.min.js"></script>
   <style>
     :root {
-      --gold: #ffd700;
-      --gold-dark: #b8860b;
-      --egypt-blue: #0f2b48;
-      --egypt-red: #8b0000;
-      --bg: #070a12;
+      --bg: #1e1e2e;
+      --card-bg: #2a2a3c;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --border: #3f3f56;
+      --danger: #ef4444;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      user-select: none;
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 20px; min-height: 100vh; }
+    
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--border);
+    }
+    header h1 { font-size: 1.8rem; color: #fff; }
+    header span { background: var(--accent); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 850px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
-    body {
+    .card h2 { font-size: 1.2rem; margin-bottom: 16px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+
+    label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; margin-top: 12px; }
+    input, textarea, select {
+      width: 100%;
       background: var(--bg);
-      background-image: 
-        radial-gradient(circle at 50% 20%, #1e3c72 0%, #070a12 80%),
-        linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.8));
-      color: #fff;
-      font-family: 'Cinzel', 'Trajan Pro', 'Segoe UI', serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      overflow-x: hidden;
-    }
-
-    .container {
-      max-width: 900px;
-      width: 100%;
-      background: rgba(15, 43, 72, 0.85);
-      border: 4px solid var(--gold);
-      border-radius: 12px;
-      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3), inset 0 0 20px rgba(0,0,0,0.8);
-      padding: 20px;
-      text-align: center;
-      position: relative;
-    }
-
-    header h1 {
-      font-size: 2.5rem;
-      color: var(--gold);
-      text-shadow: 0 0 10px rgba(255, 215, 0, 0.7), 2px 2px 4px #000;
-      letter-spacing: 3px;
-      margin-bottom: 5px;
-      text-transform: uppercase;
-    }
-
-    header p {
-      color: #7ef2ff;
-      font-size: 0.95rem;
-      margin-bottom: 20px;
-      letter-spacing: 1px;
-    }
-
-    /* Stats Bar */
-    .dashboard {
-      display: flex;
-      justify-content: space-around;
-      background: rgba(0, 0, 0, 0.6);
-      border: 2px solid var(--gold-dark);
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 20px;
-    }
-
-    .stat-box {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .stat-label {
-      font-size: 0.75rem;
-      color: #aaa;
-      text-transform: uppercase;
-    }
-
-    .stat-value {
-      font-size: 1.4rem;
-      color: var(--gold);
-      font-weight: bold;
-    }
-
-    /* Reels Canvas Container */
-    .machine-wrapper {
-      position: relative;
-      background: #000;
-      border: 4px solid var(--gold-dark);
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: inset 0 0 20px rgba(0,0,0,0.9);
-      margin-bottom: 20px;
-    }
-
-    canvas {
-      display: block;
-      width: 100%;
-      height: auto;
-    }
-
-    /* Controls */
-    .controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .bet-controls {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: rgba(0,0,0,0.4);
-      padding: 8px 15px;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px;
       border-radius: 6px;
-      border: 1px solid var(--gold-dark);
+      font-family: monospace;
+      font-size: 0.9rem;
     }
+    textarea { resize: vertical; min-height: 120px; }
+
+    .btn-group { display: flex; gap: 10px; margin-top: 16px; }
 
     button {
-      background: linear-gradient(180deg, var(--gold) 0%, var(--gold-dark) 100%);
-      color: #000;
+      background: var(--accent);
+      color: white;
       border: none;
-      padding: 10px 18px;
-      font-weight: bold;
-      font-size: 1rem;
+      padding: 10px 16px;
       border-radius: 6px;
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s ease;
-      text-transform: uppercase;
+      transition: background 0.2s;
     }
+    button:hover { background: var(--accent-hover); }
+    button.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    button.secondary:hover { background: var(--border); }
+    button.danger { background: var(--danger); }
 
-    button:hover:not(:disabled) {
-      filter: brightness(1.2);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
-    }
-
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      filter: grayscale(1);
-    }
-
-    .btn-spin {
-      padding: 14px 40px;
-      font-size: 1.3rem;
-      background: linear-gradient(180deg, #ff4500 0%, #8b0000 100%);
-      color: #fff;
-      border: 2px solid var(--gold);
-      text-shadow: 1px 1px 2px #000;
-    }
-
-    .message-banner {
-      min-height: 24px;
-      margin-top: 15px;
-      font-size: 1.1rem;
-      color: #00ffcc;
-      font-weight: bold;
-      text-shadow: 0 0 8px rgba(0, 255, 204, 0.5);
-    }
-
-    /* Paytable Modal */
-    .paytable {
-      margin-top: 15px;
-      font-size: 0.85rem;
-      color: #ccc;
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      flex-wrap: wrap;
-    }
-
-    .pay-item {
-      background: rgba(0,0,0,0.3);
-      padding: 4px 8px;
+    .status {
+      margin-top: 12px;
+      padding: 8px 12px;
       border-radius: 4px;
-      border: 1px solid rgba(255,215,0,0.2);
+      font-size: 0.85rem;
+      display: none;
     }
+    .status.success { display: block; background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e; }
+    .status.error { display: block; background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+
+    /* Keyring table */
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-muted); font-weight: 600; }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <header>
-      <h1>Cleopatra</h1>
-      <p>Secrets of the Pharaohs</p>
-    </header>
+  <header>
+    <h1>🔑 Kleopatra Web</h1>
+    <span>Client-Side PGP</span>
+  </header>
 
-    <div class="dashboard">
-      <div class="stat-box">
-        <span class="stat-label">Balance</span>
-        <span class="stat-value" id="balance">$1,000</span>
+  <div class="grid">
+    <!-- Key Generator Card -->
+    <div class="card">
+      <h2>1. Key Pair Generator</h2>
+      <label>Name</label>
+      <input type="text" id="gen-name" placeholder="John Doe">
+      
+      <label>Email Address</label>
+      <input type="email" id="gen-email" placeholder="john@example.com">
+      
+      <label>Passphrase</label>
+      <input type="password" id="gen-pass" placeholder="Secret passphrase for Private Key">
+      
+      <div class="btn-group">
+        <button id="btn-generate">Generate Key Pair</button>
       </div>
-      <div class="stat-box">
-        <span class="stat-label">Total Bet</span>
-        <span class="stat-value" id="bet-amount">$10</span>
-      </div>
-      <div class="stat-box">
-        <span class="stat-label">Win</span>
-        <span class="stat-value" id="win-amount">$0</span>
-      </div>
+      <div id="gen-status" class="status"></div>
     </div>
 
-    <div class="machine-wrapper">
-      <canvas id="slotCanvas" width="800" height="400"></canvas>
+    <!-- Keyring / Certificate Manager -->
+    <div class="card">
+      <h2>2. Keyring (Certificates)</h2>
+      <table id="key-table">
+        <thead>
+          <tr>
+            <th>Identity</th>
+            <th>Type</th>
+            <th>ID</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Dynamic key rows -->
+        </tbody>
+      </table>
+
+      <label>Import Key (Public or Private Block)</label>
+      <textarea id="import-area" placeholder="-----BEGIN PGP PUBLIC KEY BLOCK-----"></textarea>
+      
+      <div class="btn-group">
+        <button id="btn-import">Import Key</button>
+      </div>
+      <div id="import-status" class="status"></div>
     </div>
 
-    <div class="controls">
-      <div class="bet-controls">
-        <button id="btn-bet-down">-</button>
-        <span style="font-size: 0.9rem; color: #aaa;">BET: <strong style="color:#fff;" id="bet-display">$10</strong></span>
-        <button id="btn-bet-up">+</button>
+    <!-- Crypto Notepad (Encrypt) -->
+    <div class="card">
+      <h2>3. Notepad Encrypt</h2>
+      <label>Recipient Key</label>
+      <select id="encrypt-key-select">
+        <option value="">Select recipient public key...</option>
+      </select>
+
+      <label>Plaintext Message</label>
+      <textarea id="encrypt-input" placeholder="Type secret message here..."></textarea>
+
+      <div class="btn-group">
+        <button id="btn-encrypt">Encrypt Message</button>
       </div>
 
-      <button id="btn-spin" class="btn-spin">SPIN</button>
-      <button id="btn-max-bet">MAX BET</button>
+      <label>Encrypted PGP Output</label>
+      <textarea id="encrypt-output" readonly></textarea>
+      <div id="encrypt-status" class="status"></div>
     </div>
 
-    <div class="message-banner" id="message">May Cleopatra bless your journey!</div>
+    <!-- Crypto Notepad (Decrypt) -->
+    <div class="card">
+      <h2>4. Notepad Decrypt</h2>
+      <label>Passphrase (if decrypting with Private Key)</label>
+      <input type="password" id="decrypt-pass" placeholder="Passphrase for your Private Key">
 
-    <div class="paytable">
-      <div class="pay-item">👸 Cleopatra (Wild): 2x Multiplier</div>
-      <div class="pay-item">👁️ Eye of Horus: 100x</div>
-      <div class="pay-item">🪲 Scarab: 50x</div>
-      <div class="pay-item">🏺 Ankh: 25x</div>
-      <div class="pay-item">🏛️ Pyramid: 10x</div>
+      <label>Encrypted Message (PGP Armor Block)</label>
+      <textarea id="decrypt-input" placeholder="-----BEGIN PGP MESSAGE-----"></textarea>
+
+      <div class="btn-group">
+        <button id="btn-decrypt">Decrypt Message</button>
+      </div>
+
+      <label>Decrypted Plaintext</label>
+      <textarea id="decrypt-output" readonly></textarea>
+      <div id="decrypt-status" class="status"></div>
     </div>
   </div>
 
   <script>
-    // System setup & Audio synthesizer (No external audio files required)
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    
-    function playTone(freq, type, duration) {
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + duration);
+    // State Store for Keys in Memory
+    const keyring = [];
+
+    function showStatus(elemId, msg, isSuccess) {
+      const el = document.getElementById(elemId);
+      el.textContent = msg;
+      el.className = `status ${isSuccess ? 'success' : 'error'}`;
     }
 
-    // Game Engine State
-    const REELS = 5;
-    const ROWS = 3;
-    const SYMBOLS = [
-      { id: 'cleo', name: 'Cleopatra', icon: '👸', color: '#ffd700', payout: 500, wild: true },
-      { id: 'eye', name: 'Eye of Horus', icon: '👁️', color: '#00ffff', payout: 100 },
-      { id: 'scarab', name: 'Scarab', icon: '🪲', color: '#00ff66', payout: 50 },
-      { id: 'ankh', name: 'Ankh', icon: '🏺', color: '#ff00ff', payout: 25 },
-      { id: 'pyramid', name: 'Pyramid', icon: '🏛️', color: '#ffaa00', payout: 10 },
-      { id: 'A', name: 'Ace', icon: 'A', color: '#ffffff', payout: 5 },
-      { id: 'K', name: 'King', icon: 'K', color: '#dddddd', payout: 4 },
-      { id: 'Q', name: 'Queen', icon: 'Q', color: '#bbbbbb', payout: 3 }
-    ];
+    function renderKeyring() {
+      const tbody = document.querySelector('#key-table tbody');
+      const select = document.getElementById('encrypt-key-select');
+      tbody.innerHTML = '';
+      select.innerHTML = '<option value="">Select recipient public key...</option>';
 
-    let balance = 1000;
-    let currentBet = 10;
-    let isSpinning = false;
+      keyring.forEach((k, idx) => {
+        // Table row
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><strong>${k.name}</strong><br><small>${k.email}</small></td>
+          <td>${k.isPrivate ? 'Private + Public' : 'Public'}</td>
+          <td><code>${k.keyID}</code></td>
+          <td><button class="secondary" onclick="exportKey(${idx})">Export</button></td>
+        `;
+        tbody.appendChild(row);
 
-    // Canvas setup
-    const canvas = document.getElementById('slotCanvas');
-    const ctx = canvas.getContext('2d');
-    const symbolWidth = canvas.width / REELS;
-    const symbolHeight = canvas.height / ROWS;
-
-    // Grid matrix state
-    let reelPositions = Array(REELS).fill(0);
-    let reelSpeeds = Array(REELS).fill(0);
-    let grid = Array(REELS).fill(null).map(() => Array(ROWS).fill(SYMBOLS[0]));
-
-    // Initialize Grid with random symbols
-    function initGrid() {
-      for (let r = 0; r < REELS; r++) {
-        for (let row = 0; row < ROWS; row++) {
-          grid[r][row] = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
-        }
-      }
-      draw();
+        // Populate dropdown for encryption
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.textContent = `${k.name} (${k.email}) [${k.keyID}]`;
+        select.appendChild(opt);
+      });
     }
 
-    // Render Function
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // 1. Generate Key Pair
+    document.getElementById('btn-generate').addEventListener('click', async () => {
+      const name = document.getElementById('gen-name').value.trim();
+      const email = document.getElementById('gen-email').value.trim();
+      const passphrase = document.getElementById('gen-pass').value;
 
-      // Background Grid
-      for (let i = 0; i <= REELS; i++) {
-        ctx.strokeStyle = '#b8860b';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(i * symbolWidth, 0);
-        ctx.lineTo(i * symbolWidth, canvas.height);
-        ctx.stroke();
+      if (!name || !email || !passphrase) {
+        return showStatus('gen-status', 'Please fill in Name, Email, and Passphrase.', false);
       }
 
-      for (let r = 0; r < REELS; r++) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(r * symbolWidth, 0, symbolWidth, canvas.height);
-        ctx.clip();
+      showStatus('gen-status', 'Generating RSA 2048-bit key pair... Please wait.', true);
 
-        const offset = reelPositions[r] % symbolHeight;
+      try {
+        const key = await openpgp.generateKey({
+          userIDs: [{ name, email }],
+          passphrase,
+          type: 'rsa',
+          rsaBits: 2048
+        });
 
-        for (let row = -1; row <= ROWS; row++) {
-          let symIndex = (Math.floor(reelPositions[r] / symbolHeight) + row) % SYMBOLS.length;
-          if (symIndex < 0) symIndex += SYMBOLS.length;
-          
-          let sym = isSpinning ? SYMBOLS[symIndex] : grid[r][Math.min(ROWS-1, Math.max(0, row))];
-          if(!sym) sym = SYMBOLS[0];
+        const parsedKey = await openpgp.readKey({ armoredKey: key.publicKey });
 
-          const x = r * symbolWidth + symbolWidth / 2;
-          const y = row * symbolHeight + offset + symbolHeight / 2;
+        keyring.push({
+          name,
+          email,
+          keyID: parsedKey.getKeyID().toHex().substring(8).toUpperCase(),
+          publicKeyArmored: key.publicKey,
+          privateKeyArmored: key.privateKey,
+          isPrivate: true
+        });
 
-          // Draw Symbol Background glow for Cleopatra
-          if (sym.id === 'cleo') {
-            ctx.fillStyle = 'rgba(255, 215, 0, 0.15)';
-            ctx.fillRect(r * symbolWidth + 5, y - symbolHeight/2 + 5, symbolWidth - 10, symbolHeight - 10);
-          }
-
-          // Render Icon / Text
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.font = sym.icon.length === 1 ? 'bold 48px serif' : '44px sans-serif';
-          ctx.fillStyle = sym.color;
-          ctx.fillText(sym.icon, x, y);
-        }
-        ctx.restore();
-      }
-
-      // Payline overlay center line
-      ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(0, canvas.height / 2);
-      ctx.lineTo(canvas.width, canvas.height / 2);
-      ctx.stroke();
-    }
-
-    // Animation Loop
-    function animate() {
-      let stillSpinning = false;
-
-      for (let i = 0; i < REELS; i++) {
-        if (reelSpeeds[i] > 0) {
-          stillSpinning = true;
-          reelPositions[i] += reelSpeeds[i];
-          reelSpeeds[i] *= 0.97; // deceleration
-
-          if (reelSpeeds[i] < 2) {
-            reelSpeeds[i] = 0;
-            reelPositions[i] = Math.round(reelPositions[i] / symbolHeight) * symbolHeight;
-            playTone(200 + i * 50, 'triangle', 0.08); // Reel stop sound
-          }
-        }
-      }
-
-      draw();
-
-      if (stillSpinning) {
-        requestAnimationFrame(animate);
-      } else if (isSpinning) {
-        isSpinning = false;
-        evaluateWin();
-        updateUI();
-      }
-    }
-
-    // Spin trigger
-    function spin() {
-      if (isSpinning || balance < currentBet) return;
-
-      balance -= currentBet;
-      document.getElementById('win-amount').textContent = '$0';
-      document.getElementById('message').textContent = 'The reels are spinning...';
-      isSpinning = true;
-      updateUI();
-
-      // Randomize target grid
-      for (let r = 0; r < REELS; r++) {
-        for (let row = 0; row < ROWS; row++) {
-          grid[r][row] = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
-        }
-        reelSpeeds[r] = 25 + Math.random() * 10 + (r * 5); // Stagger reel stops
-      }
-
-      playTone(440, 'sine', 0.2);
-      animate();
-    }
-
-    // Evaluate Wins across paylines (Horizontal Center line + Matches)
-    function evaluateWin() {
-      let totalWin = 0;
-      const centerLine = [grid[0][1], grid[1][1], grid[2][1], grid[3][1], grid[4][1]];
-
-      let matchCount = 1;
-      let firstSym = centerLine[0];
-      let hasWildMultiplier = firstSym.id === 'cleo';
-
-      for (let i = 1; i < centerLine.length; i++) {
-        let sym = centerLine[i];
-        if (sym.id === 'cleo') hasWildMultiplier = true;
-
-        if (sym.id === firstSym.id || sym.id === 'cleo' || firstSym.id === 'cleo') {
-          matchCount++;
-          if (firstSym.id === 'cleo' && sym.id !== 'cleo') {
-            firstSym = sym;
-          }
-        } else {
-          break;
-        }
-      }
-
-      if (matchCount >= 3) {
-        let basePayout = firstSym.payout * (matchCount - 2);
-        if (hasWildMultiplier) basePayout *= 2; // Cleopatra Wild 2x Bonus
-        totalWin = basePayout * (currentBet / 10);
-
-        balance += totalWin;
-        document.getElementById('win-amount').textContent = `$${totalWin.toFixed(0)}`;
-        document.getElementById('message').textContent = 
-          `✨ WINNER! ${matchCount}x ${firstSym.name} ${hasWildMultiplier ? '(2x Cleo Multiplier!)' : ''} - Paid $${totalWin}!`;
-
-        // Victory fan-fare audio
-        playTone(523.25, 'square', 0.15);
-        setTimeout(() => playTone(659.25, 'square', 0.15), 150);
-        setTimeout(() => playTone(783.99, 'square', 0.3), 300);
-      } else {
-        document.getElementById('message').textContent = 'Try again! May the Nile bring you luck.';
-      }
-    }
-
-    // UI Updates
-    function updateUI() {
-      document.getElementById('balance').textContent = `$${balance.toLocaleString()}`;
-      document.getElementById('bet-amount').textContent = `$${currentBet}`;
-      document.getElementById('bet-display').textContent = `$${currentBet}`;
-      document.getElementById('btn-spin').disabled = isSpinning || balance < currentBet;
-    }
-
-    // Event Listeners
-    document.getElementById('btn-spin').addEventListener('click', spin);
-
-    document.getElementById('btn-bet-up').addEventListener('click', () => {
-      if (currentBet < 100 && !isSpinning) {
-        currentBet += 10;
-        updateUI();
+        renderKeyring();
+        showStatus('gen-status', 'Key pair successfully created!', true);
+      } catch (err) {
+        showStatus('gen-status', 'Generation error: ' + err.message, false);
       }
     });
 
-    document.getElementById('btn-bet-down').addEventListener('click', () => {
-      if (currentBet > 10 && !isSpinning) {
-        currentBet -= 10;
-        updateUI();
+    // 2. Import Key
+    document.getElementById('btn-import').addEventListener('click', async () => {
+      const text = document.getElementById('import-area').value.trim();
+      if (!text) return showStatus('import-status', 'Paste key text first.', false);
+
+      try {
+        let isPrivate = text.includes('PRIVATE KEY BLOCK');
+        const keyObj = isPrivate ? await openpgp.readPrivateKey({ armoredKey: text }) : await openpgp.readKey({ armoredKey: text });
+        
+        const primaryUser = await keyObj.getPrimaryUser();
+        const userStr = primaryUser.user.userID.raw || primaryUser.user.userID;
+        
+        keyring.push({
+          name: userStr.name || 'Unknown',
+          email: userStr.email || 'No email',
+          keyID: keyObj.getKeyID().toHex().substring(8).toUpperCase(),
+          publicKeyArmored: isPrivate ? keyObj.toPublic().armor() : text,
+          privateKeyArmored: isPrivate ? text : null,
+          isPrivate: isPrivate
+        });
+
+        renderKeyring();
+        document.getElementById('import-area').value = '';
+        showStatus('import-status', 'Key imported into key ring.', true);
+      } catch (err) {
+        showStatus('import-status', 'Import failed: ' + err.message, false);
       }
     });
 
-    document.getElementById('btn-max-bet').addEventListener('click', () => {
-      if (!isSpinning) {
-        currentBet = Math.min(100, balance);
-        updateUI();
+    // 3. Encrypt
+    document.getElementById('btn-encrypt').addEventListener('click', async () => {
+      const keyIdx = document.getElementById('encrypt-key-select').value;
+      const text = document.getElementById('encrypt-input').value;
+
+      if (keyIdx === '' || !text) {
+        return showStatus('encrypt-status', 'Select a key and write a message.', false);
+      }
+
+      try {
+        const targetKey = keyring[keyIdx];
+        const publicKey = await openpgp.readKey({ armoredKey: targetKey.publicKeyArmored });
+
+        const encrypted = await openpgp.encrypt({
+          message: await openpgp.createMessage({ text }),
+          encryptionKeys: publicKey
+        });
+
+        document.getElementById('encrypt-output').value = encrypted;
+        showStatus('encrypt-status', 'Message encrypted!', true);
+      } catch (err) {
+        showStatus('encrypt-status', 'Encryption failed: ' + err.message, false);
       }
     });
 
-    // Initialize Engine
-    initGrid();
-    updateUI();
+    // 4. Decrypt
+    document.getElementById('btn-decrypt').addEventListener('click', async () => {
+      const cipherText = document.getElementById('decrypt-input').value.trim();
+      const passphrase = document.getElementById('decrypt-pass').value;
+
+      if (!cipherText) return showStatus('decrypt-status', 'Paste encrypted PGP text.', false);
+
+      try {
+        // Find suitable private key from keyring
+        const privateKeysArmored = keyring.filter(k => k.isPrivate).map(k => k.privateKeyArmored);
+        
+        if (privateKeysArmored.length === 0) {
+          throw new Error('No private key available in Keyring.');
+        }
+
+        let decryptedObj = null;
+        for (const privArmored of privateKeysArmored) {
+          let privateKey = await openpgp.readPrivateKey({ armoredKey: privArmored });
+          if (passphrase) {
+            privateKey = await openpgp.decryptKey({ privateKey, passphrase });
+          }
+
+          const message = await openpgp.readMessage({ armoredMessage: cipherText });
+          decryptedObj = await openpgp.decrypt({
+            message,
+            decryptionKeys: privateKey
+          });
+          if (decryptedObj) break;
+        }
+
+        document.getElementById('decrypt-output').value = decryptedObj.data;
+        showStatus('decrypt-status', 'Decryption successful!', true);
+      } catch (err) {
+        showStatus('decrypt-status', 'Decryption failed: ' + err.message, false);
+      }
+    });
+
+    function exportKey(idx) {
+      const item = keyring[idx];
+      const data = item.isPrivate ? item.privateKeyArmored : item.publicKeyArmored;
+      const blob = new Blob([data], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${item.name.replace(/\s+/g, '_')}_${item.keyID}.asc`;
+      a.click();
+    }
   </script>
 </body>
 </html>
